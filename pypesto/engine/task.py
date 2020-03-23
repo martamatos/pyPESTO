@@ -70,7 +70,7 @@ class OptimizerTask(Task):
     def execute(self) -> 'pypesto.OptimizerResult':
         logger.info(f"Executing task {self.j_start}.")
         try:
-            optimizer_result = self.optimizer.minimize(
+            optimizer_result = self.optimizer.optimize(
                 self.problem, self.startpoint, self.j_start)
         except Exception as err:
             if self.options.allow_failed_starts:

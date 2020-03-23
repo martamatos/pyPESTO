@@ -6,7 +6,9 @@ from typing import Dict, List, Tuple, Union
 from collections import OrderedDict
 
 from .objective import Objective
-from .constants import MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES, RDATAS
+from .C import (
+    MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES, RDATAS,
+    NEGATIVE_LOG_LIKELIHOOD)
 from .options import ObjectiveOptions
 
 try:
@@ -107,6 +109,7 @@ class AmiciObjective(Objective):
             res=res, sres=sres,
             fun_accept_sensi_orders=True,
             res_accept_sensi_orders=True,
+            obj_type=NEGATIVE_LOG_LIKELIHOOD,
             options=options
         )
 

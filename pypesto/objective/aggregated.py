@@ -4,7 +4,7 @@ from typing import List
 
 from .objective import Objective, ObjectiveOptions
 
-from .constants import RDATAS
+from .C import RDATAS
 
 
 class AggregatedObjective(Objective):

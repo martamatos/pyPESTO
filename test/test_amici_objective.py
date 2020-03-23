@@ -7,7 +7,7 @@ import unittest
 
 import petab
 import pypesto
-import pypesto.objective.constants
+import pypesto.objective.C
 import numpy as np
 from test.petab_util import folder_base
 
@@ -70,7 +70,7 @@ class AmiciObjectiveTest(unittest.TestCase):
             result.optimize_result.list[0]['x'],
             eps=1e-3,
             verbosity=0,
-            mode=pypesto.objective.constants.MODE_FUN
+            mode=pypesto.objective.C.MODE_FUN
         )
         print("relative errors MODE_FUN: ", df.rel_err.values)
         print("absolute errors MODE_FUN: ", df.abs_err.values)

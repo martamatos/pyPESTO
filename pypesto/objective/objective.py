@@ -4,7 +4,9 @@ import pandas as pd
 import logging
 from typing import Callable, Dict, List, Tuple, Union
 
-from .constants import MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES
+from .C import (
+    MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES,
+    NEGATIVE_LOG_LIKELIHOOD, OBJECTIVE_TYPES)
 from .history import ObjectiveHistory
 from .options import ObjectiveOptions
 from .pre_post_process import PrePostProcessor, FixedParametersProcessor
@@ -22,7 +24,7 @@ class Objective:
     ----------
 
     fun:
-        The objective function to be minimized. If it only computes the
+        The objective function to be optimized. If it only computes the
         objective function value, it should be of the form
 
             ``fun(x) -> float``
@@ -83,13 +85,6 @@ class Objective:
         length dim_full (as in the Problem class). Can be read by the
         problem.
 
-    options:
-        Options as specified in pypesto.ObjectiveOptions.
-
-
-    Attributes
-    ----------
-
     history: pypesto.ObjectiveHistory
         For storing the call history. Initialized by the optimizer in
         reset_history().
@@ -99,13 +94,22 @@ class Objective:
         __call__. Configured in `update_from_problem()` and reset in
         `reset()`.
 
+    obj_type:
+        Typoe of the objective function. `LOG_LIKELIHOOD` and `LOG_POSTERIOR`
+        result in maximization problems, `NEGATIVE_LOG_LIKELIHOOD` and
+        `NEGATIVE_LOG_POSTERIOR` in minimization problems. Defaults to
+        `NEGATIVE_LOG_LIKELIHOOD` and thus a minimization problem.
+
+    options:
+        Options as specified in pypesto.ObjectiveOptions.
+
     Notes
     -----
 
     If fun_accept_sensi_orders resp. res_accept_sensi_orders is True,
     fun resp. res can also return dictionaries instead of tuples.
     In that case, they are expected to follow the naming conventions
-    in ``constants.py``. This is of interest, because when __call__ is
+    in ``C.py``. This is of interest, because when __call__ is
     called with return_dict = True, the full dictionary is returned, which
     can contain e.g. also simulation data or debugging information.
     """
@@ -120,6 +124,9 @@ class Objective:
                  fun_accept_sensi_orders: bool = False,
                  res_accept_sensi_orders: bool = False,
                  x_names: List[str] = None,
+                 history: ObjectiveHistory = None,
+                 pre_post_processor: PrePostProcessor = None,
+                 obj_type: str = NEGATIVE_LOG_LIKELIHOOD,
                  options: ObjectiveOptions = None):
         self.fun = fun
         self.grad = grad
@@ -129,19 +136,26 @@ class Objective:
         self.sres = sres
         self.fun_accept_sensi_orders = fun_accept_sensi_orders
         self.res_accept_sensi_orders = res_accept_sensi_orders
+        self.x_names = x_names
 
         if options is None:
             options = ObjectiveOptions()
         self.options = ObjectiveOptions.assert_instance(options)
 
-        self.x_names = x_names
+        if history is None:
+            history = ObjectiveHistory(
+                self.options, self.x_names,
+                self._call_mode_fun if self.has_fun else None)
+        self.history = history
 
-        self.history = ObjectiveHistory(self.options,
-                                        self.x_names,
-                                        self._call_mode_fun
-                                        if self.has_fun else None)
+        if pre_post_processor is None:
+            pre_post_processor = PrePostProcessor()
+        self.pre_post_processor = pre_post_processor
 
-        self.pre_post_processor = PrePostProcessor()
+        if obj_type not in OBJECTIVE_TYPES:
+            raise ValueError(
+                f"obj_type {obj_type} must be in {OBJECTIVE_TYPES}.")
+        self.obj_type = obj_type
 
     def __deepcopy__(self, memodict=None) -> 'Objective':
         other = Objective()
@@ -243,20 +257,21 @@ class Objective:
         self.check_sensi_orders(sensi_orders, mode)
 
         # pre-process
-        x = self.pre_post_processor.preprocess(x)
+        x: np.ndarray = self.pre_post_processor.preprocess(x)
 
         # compute result
-        result = self._call_unprocessed(x, sensi_orders, mode)
+        result: Dict = self._call_unprocessed(x, sensi_orders, mode)
 
         # update history
         self.history.update(x, sensi_orders, mode, result)
 
         # post-process
-        result = self.pre_post_processor.postprocess(result)
+        result: Dict = self.pre_post_processor.postprocess(result)
 
         # map to output format
         if not return_dict:
-            result = Objective.output_to_tuple(sensi_orders, mode, **result)
+            result: Tuple = Objective.output_to_tuple(
+                sensi_orders, mode, **result)
 
         return result
 

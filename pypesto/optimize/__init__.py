@@ -6,7 +6,7 @@ Optimize
 
 from .options import OptimizeOptions
 from .optimize import (
-    minimize)
+    optimize)
 from .optimizer import (
     Optimizer,
     ScipyOptimizer,
@@ -14,10 +14,12 @@ from .optimizer import (
     PyswarmOptimizer)
 from .result import OptimizerResult
 
-__all__ = ["minimize",
-           "OptimizeOptions",
-           "OptimizerResult",
-           "Optimizer",
-           "ScipyOptimizer",
-           "DlibOptimizer",
-           "PyswarmOptimizer"]
+__all__ = [
+    'optimize',
+    'OptimizeOptions',
+    'OptimizerResult',
+    'Optimizer',
+    'ScipyOptimizer',
+    'DlibOptimizer',
+    'PyswarmOptimizer'
+]

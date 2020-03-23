@@ -15,7 +15,7 @@ from .options import OptimizeOptions
 logger = logging.getLogger(__name__)
 
 
-def minimize(
+def optimize(
         problem: Problem,
         optimizer: Optimizer = None,
         n_starts: int = 100,

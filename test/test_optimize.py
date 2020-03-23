@@ -78,7 +78,7 @@ class OptimizerTest(unittest.TestCase):
         optimize_options = pypesto.OptimizeOptions(
             allow_failed_starts=allow_failed_starts)
 
-        result = pypesto.minimize(
+        result = pypesto.optimize(
             problem=problem,
             optimizer=optimizer,
             n_starts=1,

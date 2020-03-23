@@ -20,7 +20,7 @@ from .result import (
     ProfileResult,
     SampleResult)
 from .optimize import (
-    minimize,
+    optimize,
     OptimizeOptions,
     OptimizerResult,
     Optimizer,
@@ -53,7 +53,7 @@ __all__ = [
     "ProfileResult",
     "SampleResult",
     # optimize
-    "minimize",
+    "optimize",
     "OptimizeOptions",
     "OptimizerResult",
     "Optimizer",

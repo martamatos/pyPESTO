@@ -6,7 +6,7 @@ import time
 import logging
 from typing import Dict
 
-from ..objective import res_to_chi2
+from ..objective import res_to_chi2, LOG_LIKELIHOOD, LOG_POSTERIOR
 from ..problem import Problem
 from .result import OptimizerResult
 
@@ -24,49 +24,49 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def objective_decorator(minimize):
+def objective_decorator(optimize):
     """
-    Default decorator for the minimize() method to initialize and extract
+    Default decorator for the optimize() method to initialize and extract
     information stored in the objective.
     """
 
-    def wrapped_minimize(self, problem, x0, index):
+    def wrapped_optimize(self, problem, x0, index):
         problem.objective.reset_history(index=index)
         if hasattr(problem.objective, 'reset_steadystate_guesses'):
             problem.objective.reset_steadystate_guesses()
-        result = minimize(self, problem, x0, index)
+        result = optimize(self, problem, x0, index)
         problem.objective.finalize_history()
         result = fill_result_from_objective_history(
             result, problem.objective.history)
         return result
-    return wrapped_minimize
+    return wrapped_optimize
 
 
-def time_decorator(minimize):
+def time_decorator(optimize):
     """
-    Default decorator for the minimize() method to take time.
+    Default decorator for the optimize() method to take time.
     Currently, the method time.time() is used, which measures
     the wall-clock time.
     """
 
-    def wrapped_minimize(self, problem, x0, index):
+    def wrapped_optimize(self, problem, x0, index):
         start_time = time.time()
-        result = minimize(self, problem, x0, index)
+        result = optimize(self, problem, x0, index)
         used_time = time.time() - start_time
         result.time = used_time
         return result
-    return wrapped_minimize
+    return wrapped_optimize
 
 
-def fix_decorator(minimize):
+def fix_decorator(optimize):
     """
-    Default decorator for the minimize() method to include also fixed
+    Default decorator for the optimize() method to include also fixed
     parameters in the result arrays (nans will be inserted in the
     derivatives).
     """
 
-    def wrapped_minimize(self, problem, x0, index):
-        result = minimize(self, problem, x0, index)
+    def wrapped_optimize(self, problem, x0, index):
+        result = optimize(self, problem, x0, index)
         result.x = problem.get_full_vector(result.x, problem.x_fixed_vals)
         result.grad = problem.get_full_vector(result.grad)
         result.hess = problem.get_full_matrix(result.hess)
@@ -77,7 +77,7 @@ def fix_decorator(minimize):
                     f"n_fval={result.n_fval}.")
 
         return result
-    return wrapped_minimize
+    return wrapped_optimize
 
 
 def fill_result_from_objective_history(result, history):
@@ -139,7 +139,7 @@ class Optimizer(abc.ABC):
     @fix_decorator
     @time_decorator
     @objective_decorator
-    def minimize(
+    def optimize(
             self,
             problem: Problem,
             x0: np.ndarray,
@@ -192,7 +192,7 @@ class ScipyOptimizer(Optimizer):
     @fix_decorator
     @time_decorator
     @objective_decorator
-    def minimize(
+    def optimize(
             self,
             problem: Problem,
             x0: np.ndarray,
@@ -255,19 +255,28 @@ class ScipyOptimizer(Optimizer):
             method_supports_hessp = self.method.lower() in \
                 ['newton-cg', 'trust-ncg', 'trust-krylov', 'trust-constr']
 
-            fun = objective.get_fval
-            jac = objective.get_grad \
+            _fun = objective.get_fval
+            _jac = objective.get_grad \
                 if objective.has_grad and method_supports_grad \
                 else None
-            hess = objective.get_hess \
+            _hess = objective.get_hess \
                 if objective.has_hess and method_supports_hess \
                 else None
-            hessp = objective.get_hessp \
+            _hessp = objective.get_hessp \
                 if objective.has_hessp and method_supports_hessp \
                 else None
             # minimize will ignore hessp otherwise
-            if hessp is not None:
-                hess = None
+            if _hessp is not None:
+                _hess = None
+
+            sign = -1 \
+                if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
+                else 1
+
+            fun = lambda x: sign * _fun(x)
+            jac = None if _jac is None else (lambda x: sign * _jac(x))
+            hess = None if _hess is None else (lambda x: sign * _hess(x))
+            hessp = None if _hessp is None else (lambda x: sign * _hessp(x))
 
             # optimize
             res = scipy.optimize.minimize(
@@ -333,7 +342,7 @@ class DlibOptimizer(Optimizer):
     @fix_decorator
     @time_decorator
     @objective_decorator
-    def minimize(
+    def optimize(
             self,
             problem: Problem,
             x0: np.ndarray,
@@ -353,9 +362,13 @@ class DlibOptimizer(Optimizer):
             raise Exception("For this optimizer, the objective must "
                             "be able to return function values.")
 
+        sign = -1 \
+            if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
+            else 1
+
         # dlib requires variable length arguments
         def get_fval_vararg(*x):
-            return objective.get_fval(x)
+            return sign * objective.get_fval(x)
 
         dlib.find_min_global(
             get_fval_vararg,
@@ -394,7 +407,7 @@ class PyswarmOptimizer(Optimizer):
     @fix_decorator
     @time_decorator
     @objective_decorator
-    def minimize(
+    def optimize(
             self,
             problem: Problem,
             x0: np.ndarray,
@@ -405,9 +418,15 @@ class PyswarmOptimizer(Optimizer):
         if pyswarm is None:
             raise ImportError(
                 "This optimizer requires an installation of pyswarm.")
+        objective = problem.objective
 
-        xopt, fopt = pyswarm.pso(problem.objective.get_fval,
-                                 lb, ub, **self.options)
+        sign = -1 \
+            if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
+            else 1
+
+        fun = lambda x: sign * objective.get_fval(x)
+
+        xopt, fopt = pyswarm.pso(fun, lb, ub, **self.options)
 
         optimizer_result = OptimizerResult(
             x=xopt,
