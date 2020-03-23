@@ -97,7 +97,7 @@ def parameter_estimation(
         startpoint_resample=True,
     )
 
-    results = pypesto.minimize(
+    results = pypesto.optimize(
         problem, optimizer, n_starts, options=optimize_options,
     )
     results = results.optimize_result.list

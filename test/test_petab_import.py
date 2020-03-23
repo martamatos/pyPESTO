@@ -64,7 +64,7 @@ class PetabImportTest(unittest.TestCase):
             obj = obj_edatas[0]
             optimizer = pypesto.ScipyOptimizer()
             problem = importer.create_problem(obj)
-            result = pypesto.minimize(
+            result = pypesto.optimize(
                 problem=problem, optimizer=optimizer, n_starts=2)
 
             self.assertTrue(np.isfinite(

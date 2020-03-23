@@ -59,7 +59,7 @@ def create_optimization_history():
 
     # run optimization
     optimize_options = pypesto.OptimizeOptions(allow_failed_starts=True)
-    result_with_trace = pypesto.minimize(
+    result_with_trace = pypesto.optimize(
         problem=problem,
         optimizer=optimizer,
         n_starts=5,

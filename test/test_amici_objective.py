@@ -59,7 +59,7 @@ class AmiciObjectiveTest(unittest.TestCase):
         problem = importer.create_problem(obj)
         optimizer = pypesto.ScipyOptimizer('ls_trf')
 
-        result = pypesto.minimize(
+        result = pypesto.optimize(
             problem=problem, optimizer=optimizer, n_starts=2,
         )
 

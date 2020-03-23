@@ -27,7 +27,7 @@ class HistoryTest(unittest.TestCase):
             allow_failed_starts=False
         )
 
-        result = pypesto.minimize(
+        result = pypesto.optimize(
             problem=self.problem,
             optimizer=self.optimizer,
             n_starts=1,

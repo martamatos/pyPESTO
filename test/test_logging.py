@@ -31,7 +31,7 @@ class LoggingTest(unittest.TestCase):
         options = {'allow_failed_starts': True}
 
         # optimization
-        pypesto.minimize(problem, optimizer, 5, options=options)
+        pypesto.optimize(problem, optimizer, 5, options=options)
 
         # assert logging worked
         self.assertTrue(os.path.exists(filename))

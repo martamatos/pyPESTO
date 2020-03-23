@@ -43,16 +43,16 @@ class OptimizerTest(unittest.TestCase):
                             if re.match(r'^(?i)(ls_)', method):
                                 # obj has no residuals
                                 with self.assertRaises(Exception):
-                                    self.check_minimize(
+                                    self.check_optimize(
                                         obj, library, method)
                                 # no error when allow failed starts
-                                self.check_minimize(
+                                self.check_optimize(
                                     obj, library, method, True)
                             else:
-                                self.check_minimize(
+                                self.check_optimize(
                                     obj, library, method)
 
-    def check_minimize(self,
+    def check_optimize(self,
                        objective, library, solver, allow_failed_starts=False):
 
         options = {

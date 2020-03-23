@@ -22,7 +22,7 @@ class XFixedTest(unittest.TestCase):
         problem = create_problem()
         optimizer = pypesto.ScipyOptimizer()
         n_starts = 5
-        result = pypesto.minimize(problem, optimizer, n_starts)
+        result = pypesto.optimize(problem, optimizer, n_starts)
 
         optimizer_result = result.optimize_result.list[0]
         self.assertEqual(len(optimizer_result.x), 5)

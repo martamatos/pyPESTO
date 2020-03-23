@@ -176,7 +176,7 @@ def create_optimization_results(objective):
     optimize_options = pypesto.OptimizeOptions(allow_failed_starts=True)
 
     # run optimization
-    result = pypesto.minimize(
+    result = pypesto.optimize(
         problem=problem,
         optimizer=optimizer,
         n_starts=5,

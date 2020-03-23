@@ -19,7 +19,7 @@ class EngineTest(unittest.TestCase):
         lb = 0 * np.ones((1, 2))
         ub = 1 * np.ones((1, 2))
         problem = pypesto.Problem(objective, lb, ub)
-        result = pypesto.minimize(problem=problem, n_starts=9, engine=engine)
+        result = pypesto.optimize(problem=problem, n_starts=9, engine=engine)
         self.assertTrue(len(result.optimize_result.as_list()) == 9)
 
     def test_petab(self):
@@ -31,7 +31,7 @@ class EngineTest(unittest.TestCase):
             folder_base + "Zheng_PNAS2012/Zheng_PNAS2012.yaml")
         objective = petab_importer.create_objective()
         problem = petab_importer.create_problem(objective)
-        result = pypesto.minimize(problem=problem, n_starts=2, engine=engine)
+        result = pypesto.optimize(problem=problem, n_starts=2, engine=engine)
         self.assertTrue(len(result.optimize_result.as_list()) == 2)
 
 
