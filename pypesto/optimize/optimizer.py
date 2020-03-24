@@ -6,7 +6,8 @@ import time
 import logging
 from typing import Dict
 
-from ..objective import res_to_chi2, LOG_LIKELIHOOD, LOG_POSTERIOR
+from ..objective import res_to_chi2
+from ..C import MAXIMIZATION_OBJECTIVE_TYPES
 from ..problem import Problem
 from .result import OptimizerResult
 
@@ -270,10 +271,9 @@ class ScipyOptimizer(Optimizer):
                 _hess = None
 
             sign = -1 \
-                if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
-                else 1
+                if objective.obj_type in MAXIMIZATION_OBJECTIVE_TYPES else 1
 
-            fun = lambda x: sign * _fun(x)
+            fun = None if _fun is None else (lambda x: sign * _fun(x))
             jac = None if _jac is None else (lambda x: sign * _jac(x))
             hess = None if _hess is None else (lambda x: sign * _hess(x))
             hessp = None if _hessp is None else (lambda x: sign * _hessp(x))
@@ -363,8 +363,7 @@ class DlibOptimizer(Optimizer):
                             "be able to return function values.")
 
         sign = -1 \
-            if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
-            else 1
+            if objective.obj_type in MAXIMIZATION_OBJECTIVE_TYPES else 1
 
         # dlib requires variable length arguments
         def get_fval_vararg(*x):
@@ -421,11 +420,14 @@ class PyswarmOptimizer(Optimizer):
         objective = problem.objective
 
         sign = -1 \
-            if objective.obj_type in [LOG_LIKELIHOOD, LOG_POSTERIOR] \
+            if objective.obj_type in MAXIMIZATION_OBJECTIVE_TYPES \
             else 1
 
-        fun = lambda x: sign * objective.get_fval(x)
+        # define cost function
+        _fun = objective.get_fval
+        fun = None if _fun is None else (lambda x: sign * _fun(x))
 
+        # minimize
         xopt, fopt = pyswarm.pso(fun, lb, ub, **self.options)
 
         optimizer_result = OptimizerResult(

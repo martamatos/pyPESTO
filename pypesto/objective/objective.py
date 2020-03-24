@@ -4,9 +4,9 @@ import pandas as pd
 import logging
 from typing import Callable, Dict, List, Tuple, Union
 
-from .C import (
+from pypesto.C import (
     MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES,
-    NEGATIVE_LOG_LIKELIHOOD, OBJECTIVE_TYPES)
+    COST_FUNCTION, OBJECTIVE_TYPES)
 from .history import ObjectiveHistory
 from .options import ObjectiveOptions
 from .pre_post_process import PrePostProcessor, FixedParametersProcessor
@@ -95,10 +95,12 @@ class Objective:
         `reset()`.
 
     obj_type:
-        Typoe of the objective function. `LOG_LIKELIHOOD` and `LOG_POSTERIOR`
-        result in maximization problems, `NEGATIVE_LOG_LIKELIHOOD` and
-        `NEGATIVE_LOG_POSTERIOR` in minimization problems. Defaults to
-        `NEGATIVE_LOG_LIKELIHOOD` and thus a minimization problem.
+        Typoe of the objective function. Can be any of
+        `pypesto.C.OBJECTIVE_TYPES´, with
+        `pypesto.C.MINIMIZATION_OBJECTIVE_TYPES` resulting in minimization
+        problems, and those in `pypesto.C.MAXIMIZATION_OBJECTIVE_TYPES` in
+        maximization problems. Defaults to `pypesto.C.COST_FUNCTION`,
+        a minimization problem.
 
     options:
         Options as specified in pypesto.ObjectiveOptions.
@@ -126,7 +128,7 @@ class Objective:
                  x_names: List[str] = None,
                  history: ObjectiveHistory = None,
                  pre_post_processor: PrePostProcessor = None,
-                 obj_type: str = NEGATIVE_LOG_LIKELIHOOD,
+                 obj_type: str = COST_FUNCTION,
                  options: ObjectiveOptions = None):
         self.fun = fun
         self.grad = grad

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Dict, List
 
-from .C import GRAD, HESS, RES, SRES
+from pypesto.C import GRAD, HESS, RES, SRES
 
 
 class PrePostProcessor:

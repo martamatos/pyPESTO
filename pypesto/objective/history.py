@@ -4,7 +4,7 @@ import copy
 import time
 import os
 
-from .C import MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES
+from pypesto.C import MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES
 from .util import res_to_chi2, sres_to_schi2, sres_to_fim
 from .options import ObjectiveOptions
 

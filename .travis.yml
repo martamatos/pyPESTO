@@ -33,7 +33,7 @@ install:
 
 # run tests
 script:
-  - python3 -m flake8 --exclude=build,doc,example,tmp,amici_models
+  - python3 -m flake8 --exclude=build,doc,example,tmp,amici_models --per-file-ignores='*/__init__.py:F401'
   - travis_wait 20 python3 -m pytest --cov=pypesto ./test/test_*
   - travis_wait 20 xvfb-run -a python3 -m pytest --cov=pypesto --cov-append ./test/visualize/test_*
   - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then sphinx-build -W -b html -d doc/_build/html doc/ doc/_build/html; fi

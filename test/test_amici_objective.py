@@ -7,7 +7,7 @@ import unittest
 
 import petab
 import pypesto
-import pypesto.objective.C
+import pypesto.C
 import numpy as np
 from test.petab_util import folder_base
 
@@ -63,14 +63,14 @@ class AmiciObjectiveTest(unittest.TestCase):
             problem=problem, optimizer=optimizer, n_starts=2,
         )
 
-        self.assertTrue(obj.steadystate_guesses['fval'] < np.inf)
+        self.assertTrue(obj.steadystate_guesses['fval'] > -np.inf)
         self.assertTrue(len(obj.steadystate_guesses['data']) == 1)
 
         df = obj.check_grad(
             result.optimize_result.list[0]['x'],
             eps=1e-3,
             verbosity=0,
-            mode=pypesto.objective.C.MODE_FUN
+            mode=pypesto.C.MODE_FUN
         )
         print("relative errors MODE_FUN: ", df.rel_err.values)
         print("absolute errors MODE_FUN: ", df.abs_err.values)

@@ -92,7 +92,7 @@ def _execute_case(case):
     # extract results
     rdatas = ret['rdatas']
     chi2 = sum(rdata['chi2'] for rdata in rdatas)
-    llh = - ret['fval']
+    llh = ret['fval']
     simulation_df = amici.petab_objective.rdatas_to_measurement_df(
         rdatas, model, importer.petab_problem.measurement_df)
     petab.check_measurement_df(

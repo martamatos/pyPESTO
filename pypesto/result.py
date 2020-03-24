@@ -15,7 +15,7 @@ import pypesto
 
 class OptimizeResult:
     """
-    Result of the minimize() function.
+    Result of the optimize() function.
     """
 
     def __init__(self):

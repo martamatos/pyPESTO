@@ -6,9 +6,9 @@ from typing import Dict, List, Tuple, Union
 from collections import OrderedDict
 
 from .objective import Objective
-from .C import (
+from pypesto.C import (
     MODE_FUN, MODE_RES, FVAL, GRAD, HESS, RES, SRES, RDATAS,
-    NEGATIVE_LOG_LIKELIHOOD)
+    LOG_LIKELIHOOD)
 from .options import ObjectiveOptions
 
 try:
@@ -44,7 +44,6 @@ class AmiciObjective(Objective):
 
         Parameters
         ----------
-
         amici_model:
             The amici model.
         amici_solver:
@@ -109,7 +108,7 @@ class AmiciObjective(Objective):
             res=res, sres=sres,
             fun_accept_sensi_orders=True,
             res_accept_sensi_orders=True,
-            obj_type=NEGATIVE_LOG_LIKELIHOOD,
+            obj_type=LOG_LIKELIHOOD,
             options=options
         )
 
@@ -156,7 +155,7 @@ class AmiciObjective(Objective):
                                  ' `simulationFSA` as '
                                  'SteadyStateSensitivityMode!')
             self.steadystate_guesses = {
-                'fval': np.inf,
+                'fval': - np.inf,
                 'data': {
                     iexp: dict()
                     for iexp, edata in enumerate(self.edatas)
@@ -246,9 +245,9 @@ class AmiciObjective(Objective):
         sensi_method = self.amici_solver.getSensitivityMethod()
 
         # prepare outputs
-        nllh = 0.0
-        snllh = np.zeros(self.dim)
-        s2nllh = np.zeros([self.dim, self.dim])
+        llh = 0.0
+        sllh = np.zeros(self.dim)
+        s2llh = np.zeros([self.dim, self.dim])
 
         res = np.zeros([0])
         sres = np.zeros([0, self.dim])
@@ -271,7 +270,7 @@ class AmiciObjective(Objective):
         # update steady state
         for data_ix, edata in enumerate(self.edatas):
             if self.guess_steadystate and \
-                    self.steadystate_guesses['fval'] < np.inf:
+                    self.steadystate_guesses['fval'] > - np.inf:
                 self.apply_steadystate_guess(data_ix, x_dct)
 
         # run amici simulation
@@ -296,15 +295,15 @@ class AmiciObjective(Objective):
 
             # compute objective
             if mode == MODE_FUN:
-                nllh -= rdata['llh']
+                llh += rdata['llh']
                 if sensi_order > 0:
                     add_sim_grad_to_opt_grad(
                         self.x_ids,
                         par_sim_ids,
                         condition_map_sim_var,
                         rdata['sllh'],
-                        snllh,
-                        coefficient=-1.0
+                        sllh,
+                        coefficient=+1.0
                     )
                     if sensi_method == 1:
                         # TODO Compute the full Hessian, and check here
@@ -313,8 +312,8 @@ class AmiciObjective(Objective):
                             par_sim_ids,
                             condition_map_sim_var,
                             rdata['FIM'],
-                            s2nllh,
-                            coefficient=+1.0
+                            s2llh,
+                            coefficient=-1.0
                         )
 
             elif mode == MODE_RES:
@@ -333,15 +332,15 @@ class AmiciObjective(Objective):
 
         # check whether we should update data for preequilibration guesses
         if self.guess_steadystate and \
-                nllh <= self.steadystate_guesses['fval']:
-            self.steadystate_guesses['fval'] = nllh
+                llh >= self.steadystate_guesses['fval']:
+            self.steadystate_guesses['fval'] = llh
             for data_ix, rdata in enumerate(rdatas):
                 self.store_steadystate_guess(data_ix, x_dct, rdata)
 
         return {
-            FVAL: nllh,
-            GRAD: snllh,
-            HESS: s2nllh,
+            FVAL: llh,
+            GRAD: sllh,
+            HESS: s2llh,
             RES: res,
             SRES: sres,
             RDATAS: rdatas
@@ -361,7 +360,7 @@ class AmiciObjective(Objective):
         n_res = nt * self.amici_model.nytrue
 
         return {
-            FVAL: np.inf,
+            FVAL: - np.inf,
             GRAD: np.nan * np.ones(self.dim),
             HESS: np.nan * np.ones([self.dim, self.dim]),
             RES:  np.nan * np.ones(n_res),
@@ -421,7 +420,7 @@ class AmiciObjective(Objective):
         if not self.guess_steadystate:
             return
 
-        self.steadystate_guesses['fval'] = np.inf
+        self.steadystate_guesses['fval'] = - np.inf
         for condition in self.steadystate_guesses['data']:
             self.steadystate_guesses['data'][condition] = dict()
 

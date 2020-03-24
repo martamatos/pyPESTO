@@ -5,7 +5,7 @@ This is for testing the pypesto.Objective.
 import numpy as np
 import pypesto
 import unittest
-from pypesto.objective.C import MODE_RES
+from pypesto.C import MODE_RES
 
 from .test_objective import poly_for_sensi, rosen_for_sensi
 from .test_sbml_conversion import load_model_objective

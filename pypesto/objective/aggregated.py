@@ -4,7 +4,7 @@ from typing import List
 
 from .objective import Objective, ObjectiveOptions
 
-from .C import RDATAS
+from pypesto.C import RDATAS
 
 
 class AggregatedObjective(Objective):
