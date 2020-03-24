@@ -61,7 +61,7 @@ class HistoryTest(unittest.TestCase):
                 'schi2': lambda x: sres_to_schi2(*self.obj(
                     x,
                     (0, 1,),
-                    pypesto.objective.constants.MODE_RES
+                    pypesto.C.MODE_RES
                 ))
             }
             for var, fun in funs.items():
